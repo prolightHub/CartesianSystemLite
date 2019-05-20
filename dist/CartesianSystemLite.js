@@ -1,10 +1,15 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
+
+/**
+ * @namespace CartesianSystemLite
+ */
+
 var CartesianSystemLite = {
     Tweens: require("./tweens")
 };
 
-var _CartesianSystemLite = CartesianSystemLite;
+var __CartesianSystemLite__ = CartesianSystemLite;
 
 CartesianSystemLite = function(config)
 {
@@ -14,18 +19,22 @@ CartesianSystemLite.prototype = {
     "associativeArray": require("./associativearray")
 };
 
-for(var i in _CartesianSystemLite)
+for(var i in __CartesianSystemLite__)
 {
-    CartesianSystemLite[i] = _CartesianSystemLite[i];
+    CartesianSystemLite[i] = __CartesianSystemLite__[i];
 }
 
+// Export
 module.exports = CartesianSystemLite;
-
 global.CartesianSystemLite = CartesianSystemLite;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./associativearray":2,"./tweens":3}],2:[function(require,module,exports){
 var Tweens = require("../tweens/index.js");
 var defineHidden = Tweens.Object.defineHidden;
+
+/**
+ * @namespace CartesianSystemLite.prototype.associativeArray
+ */
 
 var associativeArray = function(object, keypair, arrayName)
 {
@@ -38,7 +47,7 @@ var associativeArray = function(object, keypair, arrayName)
 
     var system = {
         references: {},
-        temp: {
+        temp: { 
             counter: -1,
         },
         _name: oName,
@@ -114,6 +123,11 @@ var associativeArray = function(object, keypair, arrayName)
 
 module.exports = associativeArray;
 },{"../tweens/index.js":3}],3:[function(require,module,exports){
+
+/**
+ * @namespace CartesianSystemLite.Tweens
+ */
+
 var Tweens = {
     String: {
         upper: function(str)

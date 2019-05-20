@@ -16,7 +16,7 @@ var associativeArray = function(object, keypair, arrayName)
 
     var system = {
         references: {},
-        temp: {
+        temp: { 
             counter: -1,
         },
         _name: oName,
