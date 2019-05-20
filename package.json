@@ -1,0 +1,24 @@
+{
+  "name": "cartesian-system-lite",
+  "version": "0.0.1",
+  "description": "A spatial partitioning bins system",
+  "main": "./src/CartesianSystemLite.js",
+  "scripts": {
+    "test": "node ./src/CartesianSystemLite.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prolightHub/CartesianSystemLite.git"
+  },
+  "keywords": [
+    "spatial",
+    "javascript",
+    "library"
+  ],
+  "author": "prolightHub",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/prolightHub/CartesianSystemLite/issues"
+  },
+  "homepage": "https://github.com/prolightHub/CartesianSystemLite#readme"
+}
