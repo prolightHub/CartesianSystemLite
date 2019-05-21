@@ -32,4 +32,14 @@ var Tweens = {
     }
 };
 
+Object.defineProperty(Tweens, 'NOOP', 
+{
+    // No-operation function used when it's too expensive to detect wether a function exists or not.
+    value: function NOOP() 
+    {
+        // NOOP 
+    },
+    writable: false
+});
+
 module.exports = Tweens;
