@@ -1,6 +1,4 @@
 var Tweens = require("../tweens/index.js");
-var defineHidden = Tweens.Object.defineHidden;
-
 /**
  * @namespace CartesianSystemLite.prototype.associativeArray
  */
@@ -37,9 +35,26 @@ var associativeArray = function(object, keypair, arrayName)
 
             var item = this[id];
 
-            defineHidden(item, "_name", this.temp.name || oName);
-            defineHidden(item, "_arrayName", this._name);
-            defineHidden(item, "_id", id);
+            Object.defineProperties(item, {
+                "_name": {
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                    value: this.temp.name || oName
+                },
+                "_arrayName": {
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                    value: this._name
+                },
+                "_id": {
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                    value: id
+                },
+            })
 
             delete this.temp.name;
             return item;
@@ -51,7 +66,7 @@ var associativeArray = function(object, keypair, arrayName)
             {
                 this.temp.counter--;
             }
-            delete this[id];
+            return delete this[id];
         },
         'addObject': function(name)
         {
@@ -83,6 +98,8 @@ var associativeArray = function(object, keypair, arrayName)
         Object.defineProperty(keypair, i,  
         {
             enumerable: false,
+            writable: true,
+            configurable: true,
             value: system[i]
         });
     }

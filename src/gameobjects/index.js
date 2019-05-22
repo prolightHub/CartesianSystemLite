@@ -1,8 +1,5 @@
-
-
 var associativeArray = require("../associativearray/index.js");
 var cameraGrid = require("../cameragrid/index.js");
-var camera = require("../CartesianSystemLite.js").camera;
 
 /**
  * @namespace CartesianSystemLite.prototype.gameObjects
@@ -10,19 +7,20 @@ var camera = require("../CartesianSystemLite.js").camera;
 
 var gameObjects = associativeArray([], undefined, "gameObjects");
 
+gameObjects.used = {};
 gameObjects.window = function(cam, expand)
 {
     var used = {};
     this.used = {};
 
-    cam = cam || camera;
+    cam = cam || this.imports.camera;
 
     var col, row, cell, i, object, index;
 
     var left = cam._upperLeft.col, right = cam._lowerRight.col,
         up = cam._upperLeft.row, down = cam._lowerRight.row;
 
-    // Expansion techniques.
+    // Expansion techniques
     if(expand)
     {
         if(typeof expand === "object")
@@ -114,6 +112,18 @@ gameObjects.update = function()
         for(j = 0; j < this.used[i].length; j++)
         {
             this[i][this.used[i][j]].update();
+        }
+    }
+};
+gameObjects.eachObjectsInCamera = function(callback)
+{
+    var i, j;
+
+    for(i in this.used)
+    {
+        for(j = 0; j < this.used[i].length; j++)
+        {
+            callback(this[i][this.used[i][j]]);
         }
     }
 };

@@ -15,6 +15,9 @@ function Rect(x, y, width, height)
     this.width = width;
     this.height = height;
 
+    this.halfWidth = this.width / 2;
+    this.halfHeight = this.height / 2;
+
     var rect = this;
 
     this.body.updateBoundingBox = function()

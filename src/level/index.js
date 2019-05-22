@@ -3,7 +3,7 @@
  * 
  */
 
-function makeLevel()
+function level()
 {
     this.level = {
         bounds: {}
@@ -26,4 +26,4 @@ function makeLevel()
     };
 }
 
-module.exports = makeLevel;
+module.exports = level;

@@ -86,13 +86,17 @@ cameraGrid.setProperties = function(object)
 {
     Object.defineProperty(object, "_upperLeft", 
     {
-        value: undefined,
-        enumerable: false
+        enumerable: false,
+        writable: true,
+        configurable: true,
+        value: {}
     });
     Object.defineProperty(object, "_lowerRight", 
     {
-        value: undefined,
-        enumerable: false
+        enumerable: false,
+        writable: true,
+        configurable: true,
+        value: {}
     });
 };
 

@@ -21,12 +21,31 @@ function GameObject()
         updateBoundingBox: Tweens.NOOP
     };
 
-    this.update = function() {};
-    this.draw = function() {};
+    this.update = Tweens.NOOP;
+    this.draw = Tweens.NOOP;
 
     this.remove = function() 
     {
         gameObjects.getObject(this._arrayName).remove(this._id);
+    };
+    this.hide = function()
+    {
+        cameraGrid.removeReference(this);
+
+        if(gameObjects.used[gameObjects.references[name]])
+        {
+            var keys = gameObjects.used[gameObjects.references[name]];
+            var i = keys.indexOf(this._id);
+            if(i >= 0)
+            {
+                keys.splice(i, 1);
+            }
+        }
+    };
+    this.destroy = function()
+    {
+        this.hide();
+        this.remove();
     };
 
     cameraGrid.setProperties(this);

@@ -26,6 +26,8 @@ var Tweens = {
             Object.defineProperty(object, name,  
             {
                 enumerable: false,
+                writable: true,
+                configurable: true,
                 value: value
             });
         }

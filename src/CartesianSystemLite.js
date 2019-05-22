@@ -1,10 +1,10 @@
 
-var makeLevel = require("./makeLevel");
+var level = require("cartesian-system-lite/src/level");
 
 /**
  * @namespace CartesianSystemLite
  * 
- * @version 0.4.6
+ * @version 0.5.4
  */
 
 var CartesianSystemLite = {
@@ -19,7 +19,7 @@ var CartesianSystemLite = {
 var __CartesianSystemLite__ = CartesianSystemLite;
 
 /** 
- *  Expects :
+ *  @expects :
  *  { 
  *      level: { 
  *          width: Number, 
@@ -31,27 +31,30 @@ var __CartesianSystemLite__ = CartesianSystemLite;
  *      }
  *  }
  */
-var level, camera;
 CartesianSystemLite = function(config)
 {
     config.level = config.level || {};
     config.camera = config.camera || {};
     config.cameraGrid = config.cameraGrid || {};
 
-    makeLevel.apply(this, arguments);
+    level.apply(this, arguments);
 
-    level = this.level.setSize(
+    this.level.setSize(
         config.level.x || 0, 
         config.level.y || 0, 
         config.level.width || config.camera.width || 0,
         config.level.height || config.camera.height || 0);
     
-    camera = this.camera = new __CartesianSystemLite__.Camera(
+    this.camera = new __CartesianSystemLite__.Camera(
         config.camera.x || 0, 
         config.camera.y || 0, 
         config.camera.width, 
         config.camera.height);
     
+    this.camera.imports = {
+        level: this.level
+    };
+
     var cameraGrid = CartesianSystemLite.prototype.cameraGrid;
 
     var cellWidth = config.cameraGrid.cellWidth || 100;
@@ -62,12 +65,19 @@ CartesianSystemLite = function(config)
         Math.floor(this.level.height / cellHeight), 
         cellWidth, 
         cellHeight);
+
+    var gameObjects = CartesianSystemLite.prototype.gameObjects;
+
+    gameObjects.imports = {
+        camera: this.camera
+    };
 };
 
 CartesianSystemLite.prototype = {
     "associativeArray": require("./associativearray"),
-    "gameObjects": require("cartesian-system-lite/src/gameobjects/index.js"),
-    "cameraGrid": require("cartesian-system-lite/src/cameragrid"),
+    "gameObjects": require("./gameobjects/index.js"),
+    "cameraGrid": require("./cameragrid"),
+    "factory": require("./factory")
 };
 
 for(var i in __CartesianSystemLite__)
@@ -76,9 +86,5 @@ for(var i in __CartesianSystemLite__)
 }
 
 // Export
-module.exports = {
-    CartesianSystemLite: CartesianSystemLite,
-    level: level,
-    camera: camera
-};
+module.exports = CartesianSystemLite;
 global.CartesianSystemLite = CartesianSystemLite;

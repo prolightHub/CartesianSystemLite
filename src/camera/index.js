@@ -2,7 +2,6 @@
 var Rect = require("../gameobjects/rect.js");
 var Tweens = require("../tweens/index.js");
 var cameraGrid = require("../cameragrid/index.js");
-var level = require("../CartesianSystemLite.js").level;
 
 /**
  * @namespace CartesianSystemLite.Camera
@@ -30,10 +29,13 @@ var Camera = function(x, y, width, height)
 Camera.prototype.follow = function(x, y)
 {
     this.angle = Math.atan2(y - this.focusY, x - this.focusX);
-    this.distance = Math.sqrt(Math.pow(Math.abs(x - this.focusX), 2) + Math.pow(Math.abs(y - this.focusY), 2)) * this.speed;
+    this.distance = Math.sqrt(Math.pow(x - this.focusX, 2) + Math.pow(y - this.focusY, 2)) * this.speed;
 
+    // Move camera
     this.focusX += this.distance * Math.cos(this.angle);
     this.focusY += this.distance * Math.sin(this.angle);
+
+    var level = this.imports.level;
 
     // Keep it in the grid
     this.focusX = Tweens.Math.constrain(this.focusX, level.bounds.minX + this.halfWidth, level.bounds.maxX - this.halfWidth);
@@ -48,7 +50,7 @@ Camera.prototype.follow = function(x, y)
         this.focusX + this.halfWidth + cameraGrid.cellWidth * this.padding, 
         this.focusY + this.halfHeight + cameraGrid.cellHeight * this.padding);
 };
-Camera.prototype.view = function(object)
+Camera.prototype.view = function(object, translate)
 {
     if(typeof arguments[0] === "object")
     {
@@ -59,6 +61,11 @@ Camera.prototype.view = function(object)
         this.follow(x, y);
     }else{
         this.follow(arguments[0], arguments[1]);
+    }
+
+    if(translate)
+    {
+        // I will add this when I need it.
     }
 };
 

@@ -1,12 +1,12 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
 
-var makeLevel = require("./makeLevel");
+var level = require("cartesian-system-lite/src/level");
 
 /**
  * @namespace CartesianSystemLite
  * 
- * @version 0.4.6
+ * @version 0.5.4
  */
 
 var CartesianSystemLite = {
@@ -21,7 +21,7 @@ var CartesianSystemLite = {
 var __CartesianSystemLite__ = CartesianSystemLite;
 
 /** 
- *  Expects :
+ *  @expects :
  *  { 
  *      level: { 
  *          width: Number, 
@@ -33,27 +33,30 @@ var __CartesianSystemLite__ = CartesianSystemLite;
  *      }
  *  }
  */
-var level, camera;
 CartesianSystemLite = function(config)
 {
     config.level = config.level || {};
     config.camera = config.camera || {};
     config.cameraGrid = config.cameraGrid || {};
 
-    makeLevel.apply(this, arguments);
+    level.apply(this, arguments);
 
-    level = this.level.setSize(
+    this.level.setSize(
         config.level.x || 0, 
         config.level.y || 0, 
         config.level.width || config.camera.width || 0,
         config.level.height || config.camera.height || 0);
     
-    camera = this.camera = new __CartesianSystemLite__.Camera(
+    this.camera = new __CartesianSystemLite__.Camera(
         config.camera.x || 0, 
         config.camera.y || 0, 
         config.camera.width, 
         config.camera.height);
     
+    this.camera.imports = {
+        level: this.level
+    };
+
     var cameraGrid = CartesianSystemLite.prototype.cameraGrid;
 
     var cellWidth = config.cameraGrid.cellWidth || 100;
@@ -64,12 +67,19 @@ CartesianSystemLite = function(config)
         Math.floor(this.level.height / cellHeight), 
         cellWidth, 
         cellHeight);
+
+    var gameObjects = CartesianSystemLite.prototype.gameObjects;
+
+    gameObjects.imports = {
+        camera: this.camera
+    };
 };
 
 CartesianSystemLite.prototype = {
     "associativeArray": require("./associativearray"),
-    "gameObjects": require("cartesian-system-lite/src/gameobjects/index.js"),
-    "cameraGrid": require("cartesian-system-lite/src/cameragrid"),
+    "gameObjects": require("./gameobjects/index.js"),
+    "cameraGrid": require("./cameragrid"),
+    "factory": require("./factory")
 };
 
 for(var i in __CartesianSystemLite__)
@@ -78,17 +88,11 @@ for(var i in __CartesianSystemLite__)
 }
 
 // Export
-module.exports = {
-    CartesianSystemLite: CartesianSystemLite,
-    level: level,
-    camera: camera
-};
+module.exports = CartesianSystemLite;
 global.CartesianSystemLite = CartesianSystemLite;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./associativearray":2,"./camera":3,"./gameobjects/gameobject.js":5,"./gameobjects/rect.js":7,"./makeLevel":8,"./tweens":9,"cartesian-system-lite/src/cameragrid":4,"cartesian-system-lite/src/gameobjects/index.js":6}],2:[function(require,module,exports){
+},{"./associativearray":2,"./camera":3,"./cameragrid":4,"./factory":5,"./gameobjects/gameobject.js":6,"./gameobjects/index.js":7,"./gameobjects/rect.js":8,"./tweens":10,"cartesian-system-lite/src/level":9}],2:[function(require,module,exports){
 var Tweens = require("../tweens/index.js");
-var defineHidden = Tweens.Object.defineHidden;
-
 /**
  * @namespace CartesianSystemLite.prototype.associativeArray
  */
@@ -125,9 +129,26 @@ var associativeArray = function(object, keypair, arrayName)
 
             var item = this[id];
 
-            defineHidden(item, "_name", this.temp.name || oName);
-            defineHidden(item, "_arrayName", this._name);
-            defineHidden(item, "_id", id);
+            Object.defineProperties(item, {
+                "_name": {
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                    value: this.temp.name || oName
+                },
+                "_arrayName": {
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                    value: this._name
+                },
+                "_id": {
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                    value: id
+                },
+            })
 
             delete this.temp.name;
             return item;
@@ -139,7 +160,7 @@ var associativeArray = function(object, keypair, arrayName)
             {
                 this.temp.counter--;
             }
-            delete this[id];
+            return delete this[id];
         },
         'addObject': function(name)
         {
@@ -171,6 +192,8 @@ var associativeArray = function(object, keypair, arrayName)
         Object.defineProperty(keypair, i,  
         {
             enumerable: false,
+            writable: true,
+            configurable: true,
             value: system[i]
         });
     }
@@ -179,12 +202,11 @@ var associativeArray = function(object, keypair, arrayName)
 };
 
 module.exports = associativeArray;
-},{"../tweens/index.js":9}],3:[function(require,module,exports){
+},{"../tweens/index.js":10}],3:[function(require,module,exports){
 
 var Rect = require("../gameobjects/rect.js");
 var Tweens = require("../tweens/index.js");
 var cameraGrid = require("../cameragrid/index.js");
-var level = require("../CartesianSystemLite.js").level;
 
 /**
  * @namespace CartesianSystemLite.Camera
@@ -212,10 +234,13 @@ var Camera = function(x, y, width, height)
 Camera.prototype.follow = function(x, y)
 {
     this.angle = Math.atan2(y - this.focusY, x - this.focusX);
-    this.distance = Math.sqrt(Math.pow(Math.abs(x - this.focusX), 2) + Math.pow(Math.abs(y - this.focusY), 2)) * this.speed;
+    this.distance = Math.sqrt(Math.pow(x - this.focusX, 2) + Math.pow(y - this.focusY, 2)) * this.speed;
 
+    // Move camera
     this.focusX += this.distance * Math.cos(this.angle);
     this.focusY += this.distance * Math.sin(this.angle);
+
+    var level = this.imports.level;
 
     // Keep it in the grid
     this.focusX = Tweens.Math.constrain(this.focusX, level.bounds.minX + this.halfWidth, level.bounds.maxX - this.halfWidth);
@@ -230,7 +255,7 @@ Camera.prototype.follow = function(x, y)
         this.focusX + this.halfWidth + cameraGrid.cellWidth * this.padding, 
         this.focusY + this.halfHeight + cameraGrid.cellHeight * this.padding);
 };
-Camera.prototype.view = function(object)
+Camera.prototype.view = function(object, translate)
 {
     if(typeof arguments[0] === "object")
     {
@@ -242,10 +267,15 @@ Camera.prototype.view = function(object)
     }else{
         this.follow(arguments[0], arguments[1]);
     }
+
+    if(translate)
+    {
+        // I will add this when I need it.
+    }
 };
 
 module.exports = Camera;
-},{"../CartesianSystemLite.js":1,"../cameragrid/index.js":4,"../gameobjects/rect.js":7,"../tweens/index.js":9}],4:[function(require,module,exports){
+},{"../cameragrid/index.js":4,"../gameobjects/rect.js":8,"../tweens/index.js":10}],4:[function(require,module,exports){
 
 
 /**
@@ -334,18 +364,64 @@ cameraGrid.setProperties = function(object)
 {
     Object.defineProperty(object, "_upperLeft", 
     {
-        value: undefined,
-        enumerable: false
+        enumerable: false,
+        writable: true,
+        configurable: true,
+        value: {}
     });
     Object.defineProperty(object, "_lowerRight", 
     {
-        value: undefined,
-        enumerable: false
+        enumerable: false,
+        writable: true,
+        configurable: true,
+        value: {}
     });
 };
 
 module.exports = cameraGrid;
 },{}],5:[function(require,module,exports){
+
+var gameObjects = require("../gameobjects/index.js");
+var cameraGrid = require("../cameragrid/index.js");
+
+/**
+ * @namespace CartesianSystemLite#factory
+ */
+
+var factory = {};
+
+factory.add = function()
+{
+    var args = Array.prototype.slice.call(arguments);
+
+    var arrayName = args[0];
+    args.shift();
+
+    var place = gameObjects[gameObjects.references[arrayName]];
+    var object = place.add.apply(place, args);
+    cameraGrid.addReference(object);
+
+    return object;
+};
+factory.destroy = function(arrayName, id)
+{ 
+    var array = gameObjects[gameObjects.references[arrayName]];
+
+    // The array doesn't exist or the object is already removed.
+    if(!array || !array[id])
+    {
+        return false;
+    }
+
+    // Actually remove the object from gameObject array
+    array.destroy(id);
+
+    return true;
+};
+
+
+module.exports = factory;
+},{"../cameragrid/index.js":4,"../gameobjects/index.js":7}],6:[function(require,module,exports){
 
 var gameObjects = require("./index.js");
 var cameraGrid = require("../cameragrid/index.js");
@@ -369,12 +445,31 @@ function GameObject()
         updateBoundingBox: Tweens.NOOP
     };
 
-    this.update = function() {};
-    this.draw = function() {};
+    this.update = Tweens.NOOP;
+    this.draw = Tweens.NOOP;
 
     this.remove = function() 
     {
         gameObjects.getObject(this._arrayName).remove(this._id);
+    };
+    this.hide = function()
+    {
+        cameraGrid.removeReference(this);
+
+        if(gameObjects.used[gameObjects.references[name]])
+        {
+            var keys = gameObjects.used[gameObjects.references[name]];
+            var i = keys.indexOf(this._id);
+            if(i >= 0)
+            {
+                keys.splice(i, 1);
+            }
+        }
+    };
+    this.destroy = function()
+    {
+        this.hide();
+        this.remove();
     };
 
     cameraGrid.setProperties(this);
@@ -383,12 +478,9 @@ function GameObject()
 gameObjects.addObject("gameObject", associativeArray(GameObject));
 
 module.exports = GameObject;
-},{"../associativearray/index.js":2,"../cameragrid/index.js":4,"../tweens/index.js":9,"./index.js":6}],6:[function(require,module,exports){
-
-
+},{"../associativearray/index.js":2,"../cameragrid/index.js":4,"../tweens/index.js":10,"./index.js":7}],7:[function(require,module,exports){
 var associativeArray = require("../associativearray/index.js");
 var cameraGrid = require("../cameragrid/index.js");
-var camera = require("../CartesianSystemLite.js").camera;
 
 /**
  * @namespace CartesianSystemLite.prototype.gameObjects
@@ -396,19 +488,20 @@ var camera = require("../CartesianSystemLite.js").camera;
 
 var gameObjects = associativeArray([], undefined, "gameObjects");
 
+gameObjects.used = {};
 gameObjects.window = function(cam, expand)
 {
     var used = {};
     this.used = {};
 
-    cam = cam || camera;
+    cam = cam || this.imports.camera;
 
     var col, row, cell, i, object, index;
 
     var left = cam._upperLeft.col, right = cam._lowerRight.col,
         up = cam._upperLeft.row, down = cam._lowerRight.row;
 
-    // Expansion techniques.
+    // Expansion techniques
     if(expand)
     {
         if(typeof expand === "object")
@@ -503,9 +596,21 @@ gameObjects.update = function()
         }
     }
 };
+gameObjects.eachObjectsInCamera = function(callback)
+{
+    var i, j;
+
+    for(i in this.used)
+    {
+        for(j = 0; j < this.used[i].length; j++)
+        {
+            callback(this[i][this.used[i][j]]);
+        }
+    }
+};
 
 module.exports = gameObjects;
-},{"../CartesianSystemLite.js":1,"../associativearray/index.js":2,"../cameragrid/index.js":4}],7:[function(require,module,exports){
+},{"../associativearray/index.js":2,"../cameragrid/index.js":4}],8:[function(require,module,exports){
 var gameObjects = require("./index.js");
 var associativeArray = require("../associativearray/index.js");
 var GameObject = require("./gameobject.js");
@@ -523,6 +628,9 @@ function Rect(x, y, width, height)
     this.width = width;
     this.height = height;
 
+    this.halfWidth = this.width / 2;
+    this.halfHeight = this.height / 2;
+
     var rect = this;
 
     this.body.updateBoundingBox = function()
@@ -537,13 +645,13 @@ function Rect(x, y, width, height)
 gameObjects.addObject("rect", associativeArray(Rect));
 
 module.exports = Rect;
-},{"../associativearray/index.js":2,"./gameobject.js":5,"./index.js":6}],8:[function(require,module,exports){
+},{"../associativearray/index.js":2,"./gameobject.js":6,"./index.js":7}],9:[function(require,module,exports){
 /**
  * @namespace CartesianSystemLite#level
  * 
  */
 
-function makeLevel()
+function level()
 {
     this.level = {
         bounds: {}
@@ -566,8 +674,8 @@ function makeLevel()
     };
 }
 
-module.exports = makeLevel;
-},{}],9:[function(require,module,exports){
+module.exports = level;
+},{}],10:[function(require,module,exports){
 
 /**
  * @namespace CartesianSystemLite.Tweens
@@ -596,6 +704,8 @@ var Tweens = {
             Object.defineProperty(object, name,  
             {
                 enumerable: false,
+                writable: true,
+                configurable: true,
                 value: value
             });
         }
