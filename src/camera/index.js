@@ -13,7 +13,7 @@ var Camera = function(x, y, width, height)
 
     this.focusX = this.halfWidth;
     this.focusY = this.halfHeight;
-    this.speed = 0.1;
+    this.speed = 1;
     this.padding = 0;
 
     var camera = this;
