@@ -6,7 +6,7 @@ var level = require("cartesian-system-lite/src/level");
 /**
  * @namespace CartesianSystemLite
  * 
- * @version 0.5.4
+ * @version 0.5.8
  */
 
 var CartesianSystemLite = {
@@ -15,6 +15,7 @@ var CartesianSystemLite = {
     GameObjects: {
         GameObject: require("./gameobjects/gameobject.js"),
         Rect: require("./gameobjects/rect.js"),
+        Circle: require("./gameobjects/circle.js")
     }
 };
 
@@ -62,12 +63,14 @@ CartesianSystemLite = function(config)
     var cellWidth = config.cameraGrid.cellWidth || 100;
     var cellHeight = config.cameraGrid.cellHeight || 100;
 
+    cameraGrid.useCellCache = config.cameraGrid.useCellCache || false;
+
     cameraGrid.setup(
         Math.floor(this.level.width / cellWidth), 
         Math.floor(this.level.height / cellHeight), 
         cellWidth, 
         cellHeight);
-
+    
     var gameObjects = CartesianSystemLite.prototype.gameObjects;
 
     gameObjects.imports = {
@@ -91,7 +94,7 @@ for(var i in __CartesianSystemLite__)
 module.exports = CartesianSystemLite;
 global.CartesianSystemLite = CartesianSystemLite;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./associativearray":2,"./camera":3,"./cameragrid":4,"./factory":5,"./gameobjects/gameobject.js":6,"./gameobjects/index.js":7,"./gameobjects/rect.js":8,"./tweens":10,"cartesian-system-lite/src/level":9}],2:[function(require,module,exports){
+},{"./associativearray":2,"./camera":3,"./cameragrid":4,"./factory":5,"./gameobjects/circle.js":6,"./gameobjects/gameobject.js":7,"./gameobjects/index.js":8,"./gameobjects/rect.js":9,"./tweens":11,"cartesian-system-lite/src/level":10}],2:[function(require,module,exports){
 var Tweens = require("../tweens/index.js");
 /**
  * @namespace CartesianSystemLite.prototype.associativeArray
@@ -109,13 +112,24 @@ var associativeArray = function(object, keypair, arrayName)
     var system = {
         references: {},
         temp: { 
-            counter: -1,
+            lowest: undefined, // Lowest empty index
+            highest: 0, // highest index
         },
         _name: oName,
+        Object: object,
         'add': function()
         {
-            // Mantain the highest counter position
-            var id = ++this.temp.counter;
+            var id = this.temp.highest + 1;
+
+            if(this.temp.lowest !== undefined && !this.unique)
+            {
+                id = this.temp.lowest;
+                this.temp.lowest = undefined;
+            }
+            if(id > this.temp.highest)
+            {
+                this.temp.highest = id;
+            }
 
             if(object.apply !== undefined)
             {
@@ -124,7 +138,7 @@ var associativeArray = function(object, keypair, arrayName)
                 object.apply(item, arguments);
                 this[id] = item;
             }else{
-                this[id] = Array.prototype.slice.call(arguments)[0];
+                this[id] = arguments[0];
             }
 
             var item = this[id];
@@ -148,18 +162,24 @@ var associativeArray = function(object, keypair, arrayName)
                     configurable: true,
                     value: id
                 },
-            })
+            });
 
             delete this.temp.name;
             return item;
         },
         'remove': function(id)
         {
-            // Mantain the highest counter position
-            if(id === this.temp.counter)
+            if(id === this.temp.highest)
             {
-                this.temp.counter--;
+                this.temp.highest--;
             }
+            if(this.temp.lowest === undefined || id < this.temp.lowest)
+            {
+                this.temp.lowest = id;
+            }
+
+            // If we destroy something that is not ourselves return a 
+            // boolean to indicate wether it failed or not.
             return delete this[id];
         },
         'addObject': function(name)
@@ -202,7 +222,7 @@ var associativeArray = function(object, keypair, arrayName)
 };
 
 module.exports = associativeArray;
-},{"../tweens/index.js":10}],3:[function(require,module,exports){
+},{"../tweens/index.js":11}],3:[function(require,module,exports){
 
 var Rect = require("../gameobjects/rect.js");
 var Tweens = require("../tweens/index.js");
@@ -230,6 +250,8 @@ var Camera = function(x, y, width, height)
         this.boundingBox.maxX = camera.focusX + camera.halfWidth;
         this.boundingBox.maxY = camera.focusY + camera.halfHeight;
     };
+
+    this.body.updateBoundingBox();
 };
 Camera.prototype.follow = function(x, y)
 {
@@ -254,6 +276,27 @@ Camera.prototype.follow = function(x, y)
     this._lowerRight = cameraGrid.getPlace(
         this.focusX + this.halfWidth + cameraGrid.cellWidth * this.padding, 
         this.focusY + this.halfHeight + cameraGrid.cellHeight * this.padding);
+
+    this.body.updateBoundingBox();
+};
+Camera.prototype.translate = function(translate)
+{
+    translate(this.x, this.y);
+        
+    var level = this.imports.level;
+
+    if((level.bounds.maxX - level.bounds.minX) >= this.width)
+    {
+        translate(this.halfWidth - this.focusX, 0);
+    }else{
+        translate(-level.bounds.minX, 0);
+    }
+    if((level.bounds.maxY - level.bounds.minY) >= this.height)
+    {
+        translate(0, this.halfHeight - this.focusY);
+    }else{
+        translate(0, -level.bounds.minY);
+    }
 };
 Camera.prototype.view = function(object, translate)
 {
@@ -266,16 +309,17 @@ Camera.prototype.view = function(object, translate)
         this.follow(x, y);
     }else{
         this.follow(arguments[0], arguments[1]);
+        translate = arguments[2];
     }
 
     if(translate)
     {
-        // I will add this when I need it.
+        this.translate(translate);
     }
 };
 
 module.exports = Camera;
-},{"../cameragrid/index.js":4,"../gameobjects/rect.js":8,"../tweens/index.js":10}],4:[function(require,module,exports){
+},{"../cameragrid/index.js":4,"../gameobjects/rect.js":9,"../tweens/index.js":11}],4:[function(require,module,exports){
 
 
 /**
@@ -304,6 +348,16 @@ cameraGrid.setSize = function(cols, rows)
         for(var row = 0; row < rows; row++)
         {
             this[col].push({});
+
+            if(this.useCellCache)
+            {
+                Object.defineProperty(this[col][row], "cache",
+                {
+                    writable : true,
+                    enumerable : false,
+                    value : {},
+                });
+            }
         }
     }
 
@@ -341,7 +395,7 @@ cameraGrid.addReference = function(object)
             this[col][row][index] = toSet;
         }
     }
-    
+
     object._upperLeft = upperLeft;
     object._lowerRight = lowerRight;
 };
@@ -383,9 +437,11 @@ module.exports = cameraGrid;
 
 var gameObjects = require("../gameobjects/index.js");
 var cameraGrid = require("../cameragrid/index.js");
+var associativeArray = require("../associativearray/index.js");
+var Tweens = require("../tweens/index.js");
 
 /**
- * @namespace CartesianSystemLite#factory
+ * @namespace CartesianSystemLite.prototype.factory
  */
 
 var factory = {};
@@ -399,33 +455,110 @@ factory.add = function()
 
     var place = gameObjects[gameObjects.references[arrayName]];
     var object = place.add.apply(place, args);
-    cameraGrid.addReference(object);
-
+    cameraGrid.addReference(object, true);
+    
     return object;
+};
+factory.get = function(arrayName, id)
+{
+    return gameObjects[gameObjects.references[arrayName]][id];
 };
 factory.destroy = function(arrayName, id)
 { 
     var array = gameObjects[gameObjects.references[arrayName]];
 
-    // The array doesn't exist or the object is already removed.
+    // The array doesn't exist or the object is already destroyed.
     if(!array || !array[id])
     {
-        return false;
+        return false; // We can't destroy it
     }
 
-    // Actually remove the object from gameObject array
-    array.destroy(id);
+    // Actually destroy the object from gameObject array (and from the world!)
+    array[id].destroy();
 
     return true;
 };
 
+factory.addArray = function()
+{
+    var arrayName, GameObject;
+
+    if(typeof arguments[0] === "string" && typeof arguments[1] === "function")
+    {
+        arrayName = arguments[0];
+        GameObject = arguments[1];
+    }
+    else if(typeof arguments[0] === "function")
+    {
+        arrayName = Tweens.String.lower(arguments[0].name);
+        GameObject = arguments[0];
+    }
+
+    return gameObjects.addObject(arrayName, associativeArray(GameObject));
+};
+factory.getArray = function(arrayName)
+{
+    return gameObjects[gameObjects.references[arrayName]];
+};
+factory.removeArray = function(arrayName)
+{
+    var array = gameObjects[gameObjects.references[arrayName]];
+
+    if(!array)
+    {
+        return false; // Object does not exist
+    }
+
+    for(var i in array)
+    {
+        array[i].hide();
+    }
+
+    gameObjects.removeObject(arrayName);
+
+    return true; // Object exists
+};
 
 module.exports = factory;
-},{"../cameragrid/index.js":4,"../gameobjects/index.js":7}],6:[function(require,module,exports){
+},{"../associativearray/index.js":2,"../cameragrid/index.js":4,"../gameobjects/index.js":8,"../tweens/index.js":11}],6:[function(require,module,exports){
+var gameObjects = require("./index.js");
+var associativeArray = require("../associativearray/index.js");
+var GameObject = require("./gameobject.js");
+
+/**
+ * @namespace CartesianSystemLite.GameObjects.Circle
+ */
+
+function Circle(x, y, diameter)
+{
+    GameObject.call(this, arguments);
+
+    this.x = x;
+    this.y = y;
+    this.diameter = diameter;
+    this.radius = diameter / 2;
+
+    this.body.physics.shape = "circle";
+
+    var circle = this;
+
+    this.body.updateBoundingBox = function()
+    {
+        this.boundingBox.minX = circle.x - circle.radius;
+        this.boundingBox.minY = circle.y - circle.radius;
+        this.boundingBox.maxX = circle.x + circle.radius;
+        this.boundingBox.maxY = circle.y + circle.radius;
+    };
+    this.body.updateBoundingBox();
+}
+
+gameObjects.addObject("circle", associativeArray(Circle));
+
+module.exports = Circle;
+},{"../associativearray/index.js":2,"./gameobject.js":7,"./index.js":8}],7:[function(require,module,exports){
 
 var gameObjects = require("./index.js");
 var cameraGrid = require("../cameragrid/index.js");
-
 var associativeArray = require("../associativearray/index.js");
 var Tweens = require("../tweens/index.js");
 
@@ -436,6 +569,10 @@ var Tweens = require("../tweens/index.js");
 function GameObject()
 {
     this.body = {
+        physics: {
+            shape: "",
+            moves: false
+        },
         boundingBox: {
             minX: 0,
             minY: 0,
@@ -450,7 +587,8 @@ function GameObject()
 
     this.remove = function() 
     {
-        gameObjects.getObject(this._arrayName).remove(this._id);
+        // May need return in case .remove returns false, which should never happen!
+        gameObjects[gameObjects.references[this._arrayName]].remove(this._id);
     };
     this.hide = function()
     {
@@ -478,7 +616,7 @@ function GameObject()
 gameObjects.addObject("gameObject", associativeArray(GameObject));
 
 module.exports = GameObject;
-},{"../associativearray/index.js":2,"../cameragrid/index.js":4,"../tweens/index.js":10,"./index.js":7}],7:[function(require,module,exports){
+},{"../associativearray/index.js":2,"../cameragrid/index.js":4,"../tweens/index.js":11,"./index.js":8}],8:[function(require,module,exports){
 var associativeArray = require("../associativearray/index.js");
 var cameraGrid = require("../cameragrid/index.js");
 
@@ -538,7 +676,7 @@ gameObjects.window = function(cam, expand)
                     continue;
                 }
 
-                // Is the same as getObject(name) and then getById(id)
+                // Is the same as getObject(name)
                 object = this[this.references[cell[i].arrayName]][cell[i].id];
 
                 // Refreshes the object's cell place after it has been moved 
@@ -610,7 +748,7 @@ gameObjects.eachObjectsInCamera = function(callback)
 };
 
 module.exports = gameObjects;
-},{"../associativearray/index.js":2,"../cameragrid/index.js":4}],8:[function(require,module,exports){
+},{"../associativearray/index.js":2,"../cameragrid/index.js":4}],9:[function(require,module,exports){
 var gameObjects = require("./index.js");
 var associativeArray = require("../associativearray/index.js");
 var GameObject = require("./gameobject.js");
@@ -631,6 +769,8 @@ function Rect(x, y, width, height)
     this.halfWidth = this.width / 2;
     this.halfHeight = this.height / 2;
 
+    this.body.physics.shape = "rect";
+
     var rect = this;
 
     this.body.updateBoundingBox = function()
@@ -640,12 +780,13 @@ function Rect(x, y, width, height)
         this.boundingBox.maxX = rect.x + rect.width;
         this.boundingBox.maxY = rect.y + rect.height;
     };
+    this.body.updateBoundingBox();
 }
 
 gameObjects.addObject("rect", associativeArray(Rect));
 
 module.exports = Rect;
-},{"../associativearray/index.js":2,"./gameobject.js":6,"./index.js":7}],9:[function(require,module,exports){
+},{"../associativearray/index.js":2,"./gameobject.js":7,"./index.js":8}],10:[function(require,module,exports){
 /**
  * @namespace CartesianSystemLite#level
  * 
@@ -675,7 +816,7 @@ function level()
 }
 
 module.exports = level;
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 
 /**
  * @namespace CartesianSystemLite.Tweens

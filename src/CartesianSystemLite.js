@@ -4,7 +4,7 @@ var level = require("cartesian-system-lite/src/level");
 /**
  * @namespace CartesianSystemLite
  * 
- * @version 0.5.4
+ * @version 0.5.8
  */
 
 var CartesianSystemLite = {
@@ -13,6 +13,7 @@ var CartesianSystemLite = {
     GameObjects: {
         GameObject: require("./gameobjects/gameobject.js"),
         Rect: require("./gameobjects/rect.js"),
+        Circle: require("./gameobjects/circle.js")
     }
 };
 
@@ -60,12 +61,14 @@ CartesianSystemLite = function(config)
     var cellWidth = config.cameraGrid.cellWidth || 100;
     var cellHeight = config.cameraGrid.cellHeight || 100;
 
+    cameraGrid.useCellCache = config.cameraGrid.useCellCache || false;
+
     cameraGrid.setup(
         Math.floor(this.level.width / cellWidth), 
         Math.floor(this.level.height / cellHeight), 
         cellWidth, 
         cellHeight);
-
+    
     var gameObjects = CartesianSystemLite.prototype.gameObjects;
 
     gameObjects.imports = {

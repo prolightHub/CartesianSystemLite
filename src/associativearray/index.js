@@ -15,13 +15,24 @@ var associativeArray = function(object, keypair, arrayName)
     var system = {
         references: {},
         temp: { 
-            counter: -1,
+            lowest: undefined, // Lowest empty index
+            highest: 0, // highest index
         },
         _name: oName,
+        Object: object,
         'add': function()
         {
-            // Mantain the highest counter position
-            var id = ++this.temp.counter;
+            var id = this.temp.highest + 1;
+
+            if(this.temp.lowest !== undefined && !this.unique)
+            {
+                id = this.temp.lowest;
+                this.temp.lowest = undefined;
+            }
+            if(id > this.temp.highest)
+            {
+                this.temp.highest = id;
+            }
 
             if(object.apply !== undefined)
             {
@@ -30,7 +41,7 @@ var associativeArray = function(object, keypair, arrayName)
                 object.apply(item, arguments);
                 this[id] = item;
             }else{
-                this[id] = Array.prototype.slice.call(arguments)[0];
+                this[id] = arguments[0];
             }
 
             var item = this[id];
@@ -54,18 +65,24 @@ var associativeArray = function(object, keypair, arrayName)
                     configurable: true,
                     value: id
                 },
-            })
+            });
 
             delete this.temp.name;
             return item;
         },
         'remove': function(id)
         {
-            // Mantain the highest counter position
-            if(id === this.temp.counter)
+            if(id === this.temp.highest)
             {
-                this.temp.counter--;
+                this.temp.highest--;
             }
+            if(this.temp.lowest === undefined || id < this.temp.lowest)
+            {
+                this.temp.lowest = id;
+            }
+
+            // If we destroy something that is not ourselves return a 
+            // boolean to indicate wether it failed or not.
             return delete this[id];
         },
         'addObject': function(name)

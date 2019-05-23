@@ -57,7 +57,7 @@ gameObjects.window = function(cam, expand)
                     continue;
                 }
 
-                // Is the same as getObject(name) and then getById(id)
+                // Is the same as getObject(name)
                 object = this[this.references[cell[i].arrayName]][cell[i].id];
 
                 // Refreshes the object's cell place after it has been moved 

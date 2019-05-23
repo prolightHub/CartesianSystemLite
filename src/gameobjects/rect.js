@@ -18,6 +18,8 @@ function Rect(x, y, width, height)
     this.halfWidth = this.width / 2;
     this.halfHeight = this.height / 2;
 
+    this.body.physics.shape = "rect";
+
     var rect = this;
 
     this.body.updateBoundingBox = function()
@@ -27,6 +29,7 @@ function Rect(x, y, width, height)
         this.boundingBox.maxX = rect.x + rect.width;
         this.boundingBox.maxY = rect.y + rect.height;
     };
+    this.body.updateBoundingBox();
 }
 
 gameObjects.addObject("rect", associativeArray(Rect));

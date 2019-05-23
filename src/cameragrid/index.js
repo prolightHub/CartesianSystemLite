@@ -26,6 +26,16 @@ cameraGrid.setSize = function(cols, rows)
         for(var row = 0; row < rows; row++)
         {
             this[col].push({});
+
+            if(this.useCellCache)
+            {
+                Object.defineProperty(this[col][row], "cache",
+                {
+                    writable : true,
+                    enumerable : false,
+                    value : {},
+                });
+            }
         }
     }
 
@@ -63,7 +73,7 @@ cameraGrid.addReference = function(object)
             this[col][row][index] = toSet;
         }
     }
-    
+
     object._upperLeft = upperLeft;
     object._lowerRight = lowerRight;
 };

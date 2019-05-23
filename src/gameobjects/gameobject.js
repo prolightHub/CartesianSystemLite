@@ -1,7 +1,6 @@
 
 var gameObjects = require("./index.js");
 var cameraGrid = require("../cameragrid/index.js");
-
 var associativeArray = require("../associativearray/index.js");
 var Tweens = require("../tweens/index.js");
 
@@ -12,6 +11,10 @@ var Tweens = require("../tweens/index.js");
 function GameObject()
 {
     this.body = {
+        physics: {
+            shape: "",
+            moves: false
+        },
         boundingBox: {
             minX: 0,
             minY: 0,
@@ -26,7 +29,8 @@ function GameObject()
 
     this.remove = function() 
     {
-        gameObjects.getObject(this._arrayName).remove(this._id);
+        // May need return in case .remove returns false, which should never happen!
+        gameObjects[gameObjects.references[this._arrayName]].remove(this._id);
     };
     this.hide = function()
     {

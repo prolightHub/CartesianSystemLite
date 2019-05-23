@@ -25,6 +25,8 @@ var Camera = function(x, y, width, height)
         this.boundingBox.maxX = camera.focusX + camera.halfWidth;
         this.boundingBox.maxY = camera.focusY + camera.halfHeight;
     };
+
+    this.body.updateBoundingBox();
 };
 Camera.prototype.follow = function(x, y)
 {
@@ -49,6 +51,27 @@ Camera.prototype.follow = function(x, y)
     this._lowerRight = cameraGrid.getPlace(
         this.focusX + this.halfWidth + cameraGrid.cellWidth * this.padding, 
         this.focusY + this.halfHeight + cameraGrid.cellHeight * this.padding);
+
+    this.body.updateBoundingBox();
+};
+Camera.prototype.translate = function(translate)
+{
+    translate(this.x, this.y);
+        
+    var level = this.imports.level;
+
+    if((level.bounds.maxX - level.bounds.minX) >= this.width)
+    {
+        translate(this.halfWidth - this.focusX, 0);
+    }else{
+        translate(-level.bounds.minX, 0);
+    }
+    if((level.bounds.maxY - level.bounds.minY) >= this.height)
+    {
+        translate(0, this.halfHeight - this.focusY);
+    }else{
+        translate(0, -level.bounds.minY);
+    }
 };
 Camera.prototype.view = function(object, translate)
 {
@@ -61,11 +84,12 @@ Camera.prototype.view = function(object, translate)
         this.follow(x, y);
     }else{
         this.follow(arguments[0], arguments[1]);
+        translate = arguments[2];
     }
 
     if(translate)
     {
-        // I will add this when I need it.
+        this.translate(translate);
     }
 };
 
