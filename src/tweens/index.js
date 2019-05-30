@@ -31,6 +31,17 @@ var Tweens = {
                 value: value
             });
         }
+    },
+    Angle: {
+        resolveAngle: function(a)
+        {
+            a = a % 360;
+            if(a < 0)
+            {
+                return 360 - Math.abs(a);  
+            }
+            return a;
+        },
     }
 };
 

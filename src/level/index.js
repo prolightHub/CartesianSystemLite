@@ -24,6 +24,8 @@ function level()
         this.bounds.maxX = this.x + this.width;
         this.bounds.maxY = this.y + this.height;
     };
+
+    return this.level;
 }
 
 module.exports = level;

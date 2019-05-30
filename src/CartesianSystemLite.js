@@ -4,7 +4,7 @@ var level = require("cartesian-system-lite/src/level");
 /**
  * @namespace CartesianSystemLite
  * 
- * @version 0.5.8
+ * @version 0.6.0
  */
 
 var CartesianSystemLite = {

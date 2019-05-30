@@ -20,6 +20,11 @@ factory.add = function()
     var place = gameObjects[gameObjects.references[arrayName]];
     var object = place.add.apply(place, args);
     cameraGrid.addReference(object, true);
+
+    if(typeof object.setup === "function")
+    {
+        object.setup();
+    }
     
     return object;
 };

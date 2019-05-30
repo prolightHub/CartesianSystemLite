@@ -6,7 +6,7 @@ var level = require("cartesian-system-lite/src/level");
 /**
  * @namespace CartesianSystemLite
  * 
- * @version 0.5.8
+ * @version 0.6.0
  */
 
 var CartesianSystemLite = {
@@ -117,7 +117,7 @@ var associativeArray = function(object, keypair, arrayName)
         },
         _name: oName,
         Object: object,
-        'add': function()
+        "add": function()
         {
             var id = this.temp.highest + 1;
 
@@ -133,7 +133,7 @@ var associativeArray = function(object, keypair, arrayName)
 
             if(object.apply !== undefined)
             {
-                // May need to use 'new' operator in some cases, but object.apply may not work.
+                // May need to use "new" operator in some cases, but object.apply may not work.
                 var item = Object.create(object.prototype);
                 object.apply(item, arguments);
                 this[id] = item;
@@ -167,7 +167,7 @@ var associativeArray = function(object, keypair, arrayName)
             delete this.temp.name;
             return item;
         },
-        'remove': function(id)
+        "remove": function(id)
         {
             if(id === this.temp.highest)
             {
@@ -182,7 +182,7 @@ var associativeArray = function(object, keypair, arrayName)
             // boolean to indicate wether it failed or not.
             return delete this[id];
         },
-        'addObject': function(name)
+        "addObject": function(name)
         {
             if(this.references[name] !== undefined)
             {
@@ -196,14 +196,21 @@ var associativeArray = function(object, keypair, arrayName)
             this.references[name] = item._id;
             return item;
         },
-        'getObject': function(name)
+        "getObject": function(name)
         {
             return this[this.references[name]];
         },
-        'removeObject': function(name)
+        "removeObject": function(name)
         {
             delete this[this.references[name]];
             delete this.references[name];
+        },
+        "forEach": function(func)
+        {
+            for(var i in this)
+            {
+                func(this[i], i, this);
+            }
         }
     };
 
@@ -456,6 +463,11 @@ factory.add = function()
     var place = gameObjects[gameObjects.references[arrayName]];
     var object = place.add.apply(place, args);
     cameraGrid.addReference(object, true);
+
+    if(typeof object.setup === "function")
+    {
+        object.setup();
+    }
     
     return object;
 };
@@ -619,6 +631,7 @@ module.exports = GameObject;
 },{"../associativearray/index.js":2,"../cameragrid/index.js":4,"../tweens/index.js":11,"./index.js":8}],8:[function(require,module,exports){
 var associativeArray = require("../associativearray/index.js");
 var cameraGrid = require("../cameragrid/index.js");
+var NOOP = require("../tweens/index.js").NOOP;
 
 /**
  * @namespace CartesianSystemLite.prototype.gameObjects
@@ -627,6 +640,7 @@ var cameraGrid = require("../cameragrid/index.js");
 var gameObjects = associativeArray([], undefined, "gameObjects");
 
 gameObjects.used = {};
+
 gameObjects.window = function(cam, expand)
 {
     var used = {};
@@ -748,7 +762,7 @@ gameObjects.eachObjectsInCamera = function(callback)
 };
 
 module.exports = gameObjects;
-},{"../associativearray/index.js":2,"../cameragrid/index.js":4}],9:[function(require,module,exports){
+},{"../associativearray/index.js":2,"../cameragrid/index.js":4,"../tweens/index.js":11}],9:[function(require,module,exports){
 var gameObjects = require("./index.js");
 var associativeArray = require("../associativearray/index.js");
 var GameObject = require("./gameobject.js");
@@ -813,6 +827,8 @@ function level()
         this.bounds.maxX = this.x + this.width;
         this.bounds.maxY = this.y + this.height;
     };
+
+    return this.level;
 }
 
 module.exports = level;
@@ -850,6 +866,17 @@ var Tweens = {
                 value: value
             });
         }
+    },
+    Angle: {
+        resolveAngle: function(a)
+        {
+            a = a % 360;
+            if(a < 0)
+            {
+                return 360 - Math.abs(a);  
+            }
+            return a;
+        },
     }
 };
 

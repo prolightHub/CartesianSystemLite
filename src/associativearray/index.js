@@ -20,7 +20,7 @@ var associativeArray = function(object, keypair, arrayName)
         },
         _name: oName,
         Object: object,
-        'add': function()
+        "add": function()
         {
             var id = this.temp.highest + 1;
 
@@ -36,7 +36,7 @@ var associativeArray = function(object, keypair, arrayName)
 
             if(object.apply !== undefined)
             {
-                // May need to use 'new' operator in some cases, but object.apply may not work.
+                // May need to use "new" operator in some cases, but object.apply may not work.
                 var item = Object.create(object.prototype);
                 object.apply(item, arguments);
                 this[id] = item;
@@ -70,7 +70,7 @@ var associativeArray = function(object, keypair, arrayName)
             delete this.temp.name;
             return item;
         },
-        'remove': function(id)
+        "remove": function(id)
         {
             if(id === this.temp.highest)
             {
@@ -85,7 +85,7 @@ var associativeArray = function(object, keypair, arrayName)
             // boolean to indicate wether it failed or not.
             return delete this[id];
         },
-        'addObject': function(name)
+        "addObject": function(name)
         {
             if(this.references[name] !== undefined)
             {
@@ -99,14 +99,21 @@ var associativeArray = function(object, keypair, arrayName)
             this.references[name] = item._id;
             return item;
         },
-        'getObject': function(name)
+        "getObject": function(name)
         {
             return this[this.references[name]];
         },
-        'removeObject': function(name)
+        "removeObject": function(name)
         {
             delete this[this.references[name]];
             delete this.references[name];
+        },
+        "forEach": function(func)
+        {
+            for(var i in this)
+            {
+                func(this[i], i, this);
+            }
         }
     };
 

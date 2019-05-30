@@ -1,5 +1,6 @@
 var associativeArray = require("../associativearray/index.js");
 var cameraGrid = require("../cameragrid/index.js");
+var NOOP = require("../tweens/index.js").NOOP;
 
 /**
  * @namespace CartesianSystemLite.prototype.gameObjects
@@ -8,6 +9,7 @@ var cameraGrid = require("../cameragrid/index.js");
 var gameObjects = associativeArray([], undefined, "gameObjects");
 
 gameObjects.used = {};
+
 gameObjects.window = function(cam, expand)
 {
     var used = {};
