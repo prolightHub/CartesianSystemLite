@@ -65,6 +65,8 @@ window.setInterval(function()
 ```
 Notice the translate parameter, this is passed in as a function to
 translate/pan the camera around the world.
+But what is window?
+Window uses the camera's view to setup up all the gameObjects to be called in draw/update functions.
 
 ---
 Well okay, but now you're probably thinking *how do I define some game objects?*
