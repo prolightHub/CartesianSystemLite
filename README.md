@@ -87,6 +87,7 @@ function SomeGameObject()
     this.update = function()
     {
         // Update as well as maybe call built in functions in here
+        // Like this.updateBoundingBox();
     };
     
     this.draw = function()
