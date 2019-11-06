@@ -24,7 +24,7 @@ https://github.com/prolightHub/SpaceExploration
 ## Usage
 
 This sets you with a world:
-```
+```js
 var config = {
     level: {
         x: 0,
@@ -49,7 +49,7 @@ var world = new CartesianSystemLite(config);
 ----
 You can define your main loop as:
 
-```
+```js
 window.setInterval(function()
 {
     world.camera.view(gameObject, translate); 
@@ -72,7 +72,7 @@ Window uses the camera's view to setup up all the gameObjects to be called in dr
 Well okay, but now you're probably thinking *how do I define some game objects?*
 It's simple:
 
-```
+```js
 function SomeGameObject()
 {
     // Inheritance from "GameObject". You can also
@@ -102,7 +102,7 @@ world.factory.addArray("someGameObject", SomeGameObject);
 
 What about creating SomeGameObjects?
 
-```
+```js
 var someGameObject = world.add("someGameObject", arg1, arg2, arg3, arg4);
 ```
 
